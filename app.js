@@ -1,8 +1,20 @@
-FHIR.oauth2.ready().then(async (client) => {
+FHIR.oauth2.ready().then(async function(client) {
   try {
+    console.log("Client:", client);
 
-    // Get patient
-    const patient = await client.patient.read();
+    // Get patient ID from context
+    const patientId = client.patient.id;
+
+    if (!patientId) {
+      throw new Error("No patient in context");
+    }
+
+    console.log("Patient ID:", patientId);
+
+    // Fetch patient resource
+    const patient = await client.request(`Patient/${patientId}`);
+
+    console.log("Patient Data:", patient);
 
     const name = patient.name?.[0];
     const fullName = name
@@ -12,15 +24,8 @@ FHIR.oauth2.ready().then(async (client) => {
     document.getElementById("patient").innerHTML =
       "Patient: " + fullName;
 
-    // OPTIONAL: get observations (labs)
-    const observations = await client.request(
-      `Observation?patient=${client.patient.id}&_count=5`
-    );
-
-    console.log("Observations:", observations);
-
   } catch (error) {
-    console.error(error);
+    console.error("ERROR:", error);
     document.getElementById("patient").innerHTML =
       "Error loading patient data";
   }
