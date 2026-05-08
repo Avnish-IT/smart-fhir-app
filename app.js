@@ -1,25 +1,19 @@
 FHIR.oauth2.ready().then(async function(client) {
   try {
-    console.log("Client:", client);
+    console.log("client:", client);
 
-    // Get patient ID from context
     const patientId = client.patient.id;
-
-    if (!patientId) {
-      throw new Error("No patient in context");
-    }
-
     console.log("Patient ID:", patientId);
 
-    // Fetch patient resource
+    // THIS uses correct server automatically
     const patient = await client.request(`Patient/${patientId}`);
 
-    console.log("Patient Data:", patient);
+    console.log("Patient:", patient);
 
     const name = patient.name?.[0];
     const fullName = name
       ? name.given.join(" ") + " " + name.family
-      : "No name available";
+      : "No name";
 
     document.getElementById("patient").innerHTML =
       "Patient: " + fullName;
