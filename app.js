@@ -1,11 +1,10 @@
 FHIR.oauth2.ready().then(async function(client) {
+  console.log("SMART ready");
+
+  const patientId = client.patient.id;
+
+  // ================= PATIENT =================
   try {
-    console.log("SMART ready");
-
-    const patientId = client.patient.id;
-    console.log("Patient ID:", patientId);
-
-    // ================= PATIENT INFO =================
     const patient = await client.request(`Patient/${patientId}`);
 
     const name = patient.name?.[0];
@@ -19,73 +18,88 @@ FHIR.oauth2.ready().then(async function(client) {
       <p><b>Gender:</b> ${patient.gender || "N/A"}</p>
       <p><b>DOB:</b> ${patient.birthDate || "N/A"}</p>
     `;
+  } catch (e) {
+    console.error("Patient error:", e);
+    document.getElementById("patient").innerHTML = "<p>Error loading patient</p>";
+  }
 
-    // ================= CONDITIONS =================
+  // ================= CONDITIONS =================
+  try {
     const conditions = await client.request(
       `Condition?patient=${patientId}&_count=5`
     );
 
-    let condHTML = "<h3>Conditions</h3>";
+    let html = "<h3>Conditions</h3>";
 
     if (!conditions.entry) {
-      condHTML += "<p>No conditions found</p>";
+      html += "<p>No conditions found</p>";
     } else {
-      condHTML += "<table><tr><th>Condition</th></tr>";
+      html += "<ul>";
       conditions.entry.forEach(e => {
-        const c = e.resource.code?.text || "Unknown";
-        condHTML += `<tr><td>${c}</td></tr>`;
+        html += `<li>${e.resource.code?.text || "Unknown"}</li>`;
       });
-      condHTML += "</table>";
+      html += "</ul>";
     }
 
-    document.getElementById("conditions").innerHTML = condHTML;
+    document.getElementById("conditions").innerHTML = html;
+  } catch (e) {
+    console.error("Conditions error:", e);
+    document.getElementById("conditions").innerHTML =
+      "<h3>Conditions</h3><p>Error loading</p>";
+  }
 
-    // ================= OBSERVATIONS =================
+  // ================= OBSERVATIONS =================
+  try {
     const observations = await client.request(
       `Observation?patient=${patientId}&_count=5`
     );
 
-    let obsHTML = "<h3>Observations</h3>";
+    let html = "<h3>Observations</h3>";
 
     if (!observations.entry) {
-      obsHTML += "<p>No observations found</p>";
+      html += "<p>No observations found</p>";
     } else {
-      obsHTML += "<table><tr><th>Type</th><th>Value</th></tr>";
+      html += "<ul>";
       observations.entry.forEach(e => {
         const o = e.resource;
-        const type = o.code?.text || "Unknown";
-        const value = o.valueQuantity?.value || "N/A";
-
-        obsHTML += `<tr><td>${type}</td><td>${value}</td></tr>`;
+        html += `<li>${o.code?.text || "Unknown"}: ${
+          o.valueQuantity?.value || "N/A"
+        }</li>`;
       });
-      obsHTML += "</table>";
+      html += "</ul>";
     }
 
-    document.getElementById("observations").innerHTML = obsHTML;
+    document.getElementById("observations").innerHTML = html;
+  } catch (e) {
+    console.error("Observations error:", e);
+    document.getElementById("observations").innerHTML =
+      "<h3>Observations</h3><p>Error loading</p>";
+  }
 
-    // ================= MEDICATIONS =================
+  // ================= MEDICATIONS =================
+  try {
     const meds = await client.request(
       `MedicationRequest?patient=${patientId}&_count=5`
     );
 
-    let medHTML = "<h3>Medications</h3>";
+    let html = "<h3>Medications</h3>";
 
     if (!meds.entry) {
-      medHTML += "<p>No medications found</p>";
+      html += "<p>No medications found</p>";
     } else {
-      medHTML += "<table><tr><th>Medication</th></tr>";
+      html += "<ul>";
       meds.entry.forEach(e => {
-        const m =
-          e.resource.medicationCodeableConcept?.text || "Unknown";
-        medHTML += `<tr><td>${m}</td></tr>`;
+        html += `<li>${
+          e.resource.medicationCodeableConcept?.text || "Unknown"
+        }</li>`;
       });
-      medHTML += "</table>";
+      html += "</ul>";
     }
 
-    document.getElementById("medications").innerHTML = medHTML;
-
-  } catch (error) {
-    console.error("ERROR:", error);
-    document.body.innerHTML = "<h2>Error loading dashboard</h2>";
+    document.getElementById("medications").innerHTML = html;
+  } catch (e) {
+    console.error("Medications error:", e);
+    document.getElementById("medications").innerHTML =
+      "<h3>Medications</h3><p>Error loading</p>";
   }
 });
